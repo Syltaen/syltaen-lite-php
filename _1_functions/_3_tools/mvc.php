@@ -17,11 +17,11 @@ function render($files, $data = array(), $noecho = false) {
 	if (is_array($files)):
 		$filename = "";
 		for($i = count($files); $i > 0; $i--):
-			$filename = get_template_directory() . '/_6_views/'. $files[$i-1].'.pug';
+			$filename = BASEDIR . '/_6_views/'. $files[$i-1].'.pug';
 			if (file_exists( $filename )) { break; }
 		endfor;
 	else:
-		$filename =  get_template_directory() . '/_6_views/'. $files . '.pug';
+		$filename =  BASEDIR . '/_6_views/'. $files . '.pug';
 	endif;
 
 	/*=====  ERRORS  =====*/
@@ -46,11 +46,11 @@ function model($files, $spec = array()) {
 	if (is_array($files)):
 		$filename = "";
 		for($i = count($files); $i > 0; $i--):
-			$filename = get_template_directory() . '/_5_models/'. $files[$i-1].'.php';
+			$filename = BASEDIR . '/_5_models/'. $files[$i-1].'.php';
 			if (file_exists( $filename )) { break; }
 		endfor;
 	else:
-		$filename =  get_template_directory() . '/_5_models/'. $files . '.php';
+		$filename =  BASEDIR . '/_5_models/'. $files . '.php';
 	endif;
 
 	/* ========= INCLUDE ========= */
@@ -62,6 +62,5 @@ function model($files, $spec = array()) {
 // > ERRORS LOGING
 // ==================================================
 set_error_handler(function($errno, $errstr, $errfile, $errline ) {
-	ChromePhp::error("PHP ERROR $errno : $errstr");
 	return false;
 });
