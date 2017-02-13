@@ -1,0 +1,45 @@
+doctype
+
+html
+
+	head
+		title Titre
+		meta(charset="UTF-8")
+		meta(http-equiv="Content-Type" content="text/html; charset=UTF-8")
+		meta(http-equiv="X-UA-Compatible" content="IE=edge")
+		meta(name="viewport" content="width=device-width, initial-scale=1.0")
+		link(rel="stylesheet", href="_2_assets/css/styles.min.css")
+		block head
+
+	body
+		//- ==================================================
+		//- > HEADER
+		//- ==================================================
+		block header
+			header#site-header
+
+
+
+		//- ==================================================
+		//- > CONTENT
+		//- ==================================================
+		main(role="main")
+			block main
+
+
+
+		//- ==================================================
+		//- > FOOTER
+		//- ==================================================
+		block footer
+			footer#site-footer(role="contentinfo")
+				.container
+
+
+
+		//- ==================================================
+		//- > JS ASSETS
+		//- ==================================================
+		script(src="_2_assets/js/vendors.min.js")
+		script(src="_2_assets/js/modules.min.js")
+		script(src="_2_assets/js/app.min.js")
