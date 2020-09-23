@@ -1,0 +1,53 @@
+// =============================================================================
+// > LAYOUTS: SITE HEADER
+// =============================================================================
+
+.site-header
+
+    padding: 30px 0
+    line-height: 50px
+
+    // ==================================================
+    // > BRAND
+    // ==================================================
+    &__brand
+        display: block
+        +size(200px, 50px)
+
+        +font(20px bold uppercase)
+
+    // ==================================================
+    // > NAV
+    // ==================================================
+    &__nav
+        +flex(row nowrap, space-between, center)
+
+    // ==================================================
+    // > MAIN MENU
+    // ==================================================
+    &__menu
+        +flex(row nowrap, space-around, center)
+        position: relative
+        z-index: 10
+
+        &__item
+            position: relative
+            z-index: 10
+
+        &__link
+            +font(text)
+            padding: 0 1.5em
+            &:hover
+                +font(primary)
+
+        .sub-menu
+            display: none
+
+
+
+    // ========== INDICATOR ========== //
+    &__menu__indicator
+        +absolute(bottom 0 left 0)
+        +size(0, 5px)
+        background: color(primary)
+        transition: all .5s easing(bounce)

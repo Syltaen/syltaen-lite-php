@@ -1,0 +1,54 @@
+// =============================================================================
+// > MODULES - GUI: SHADOWBOX
+// =============================================================================
+
+.shadowbox
+    @extend %cover
+    position: fixed
+    background: rgba(black, .75)
+    z-index: 9999
+    display: none
+
+    &__content
+        @extend %cover
+        display: flex
+        align-items: center
+        justify-content: center
+
+        // Loading content
+        &::before
+            +fa(circle-notch)
+            +size(30px)
+            +font(20px 30px center white)
+            +absolute(top 50% left 50%)
+            transform: translate(-50%, -50%)
+            animation: spin 2s linear infinite
+            margin-left: -15px
+            margin-top: -15px
+
+    &__close
+        +absolute(top 20px right 20px)
+        +size(50px)
+        +font(30px 50px white center)
+        text-indent: -9999px
+        cursor: pointer
+        transition: all .25s ease
+        z-index: 100
+
+        &:hover
+            +font(primary)
+
+        &::before
+            +fa(times)
+            @extend %cover
+            text-indent: 0
+
+
+    // ==================================================
+    // > CONTENT TYPES
+    // ==================================================
+    iframe
+        +size(60%)
+        position: relative
+        +screen(xs)
+            +size(90%)

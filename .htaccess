@@ -1,0 +1,37 @@
+##################################
+# CONFIG
+##################################
+
+# PROD PATH
+SetEnvIf HOST "^.*" BASE_PATH=/
+
+# LOCAL PATH
+SetEnvIf HOST "^localhost$" BASE_PATH=/_/syltaen/syltaen-lite-php
+
+
+##################################
+# REWRITE RULES
+##################################
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+
+# FORCE TRAILING SLASH
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*[^/])$ %{ENV:BASE_PATH}$1/ [L,R]
+
+# BEGIN CACHE
+RewriteCond %{SCRIPT_FILENAME} !-f
+RewriteCond %{SCRIPT_FILENAME} !-d
+RewriteCond %{SCRIPT_FILENAME} !-l
+RewriteCond %{REQUEST_METHOD} !POST
+RewriteCond %{QUERY_STRING} !.+
+RewriteCond %{DOCUMENT_ROOT}/%{ENV:BASE_PATH}app/cache/httpdocs/%{ENV:BASE_PATH}$1index.html -f
+RewriteRule ^(.*)$ /%{ENV:BASE_PATH}app/cache/httpdocs/%{ENV:BASE_PATH}$1index.html [L]
+
+# BEGIN ROUTER
+RewriteCond %{SCRIPT_FILENAME} !-f
+RewriteCond %{SCRIPT_FILENAME} !-d
+RewriteCond %{SCRIPT_FILENAME} !-l
+RewriteRule ^(.*)$ %{ENV:BASE_PATH}index.php/$1
+</IfModule>

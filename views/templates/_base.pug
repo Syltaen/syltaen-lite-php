@@ -1,0 +1,75 @@
+doctype
+
+html(lang=site.language)
+
+    //- =============================================================================
+    //- > HEAD
+    //- =============================================================================
+    head
+        meta(charset=site.charset)
+        meta(http-equiv="Content-Type" content="text/html; charset=UTF-8")
+        meta(http-equiv="X-UA-Compatible" content="IE=edge")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+
+        title!= site.page_title
+        link(href=$_css("bundle.css"), rel="stylesheet")
+
+        block head
+
+    //- =============================================================================
+    //- > BODY
+    //- =============================================================================
+    body(class=site.body_class)
+
+        //- ==================================================
+        //- > SITE
+        //- ==================================================
+        block site
+            .site
+
+                //- ==================================================
+                //- > HEADER
+                //- ==================================================
+                header(role="navigation").site-header
+
+                    nav.site-header__nav.container
+
+                        a.site-header__brand(href=site.url rel="home")!= site.name
+
+
+
+
+                //- ==================================================
+                //- > CONTENT
+                //- ==================================================
+                block main
+                    main.site-main#site-views(role="main"): .site-view(data-namespace="page")
+
+                        //- ========== INTRO ========== -//
+                        block intro
+                            .site-intro
+                                .container
+                                    h1!= site.name
+
+                        //- ========== CONTENT ========== -//
+                        block sections
+
+
+
+
+
+        //- ==================================================
+        //- > OVERLAYS
+        //- ==================================================
+        .site-mobilenav__trigger
+            span
+            span
+            span
+
+
+        #scroll-top
+
+
+
+        script(src=$_js("bundle.js"))
+

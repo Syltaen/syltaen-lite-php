@@ -1,0 +1,117 @@
+// =============================================================================
+// > LAYOUTS: MODULES - NAVIGATION: MOBILE
+// =============================================================================
+
+.site-mobilenav
+    z-index: 7500
+    +fixed(top 0 right 0)
+    +size(100%)
+    max-width: 400px
+    transform: translateX(100%)
+    background: white
+    transition: all .35s ease
+    overflow-y: scroll
+    display: none
+    padding: 0 1.5em
+    +screen(sm)
+        display: block
+
+    .is-mobilenav-open &
+        transform: translateX(0)
+
+    &::-webkit-scrollbar
+        &-track
+            background-color: transparent
+        &-thumb
+            background: color(primary-dark)
+
+    &__nav
+        display: block
+        clear: both
+        +flex(column, center)
+        height: 100%
+
+    &__menu
+        +flex(column)
+        & > li
+            padding: .5em 0
+            border-bottom: 1px solid color(light-grey)
+            &:last-child
+                border-bottom: 0
+        a
+            +font(20px bold uppercase text left)
+            display: block
+            padding: .5em 0
+            transition: all 0.2s ease
+            &::after
+                content: none !important
+            &:hover
+                +font(primary)
+        .sub-menu a
+            +font(18px regular text)
+            padding: 5px 0
+            &:hover
+                +font(primary)
+
+
+    // ==================================================
+    // > TRIGGER
+    // ==================================================
+    &__trigger
+        z-index: 9999
+        +fixed(top 30px right 30px)
+        +size(50px)
+        border: 2px solid color(white)
+        background: color(primary)
+        box-shadow: 0 0 0 4px color(primary)
+        border-radius: 50%
+        opacity: 0
+        visibility: hidden
+        transition: all .2s ease
+        cursor: pointer
+        +screen(xs)
+            +pos(top 20px right 20px)
+
+        +screen(sm)
+            opacity: 1
+            visibility: visible
+
+        span
+            position: absolute
+            width: 26px
+            margin-top: -1px
+            margin-left: -13px
+            height: 2px
+            top: 50%
+            left: 50%
+            background: color(white)
+            transition: margin .25s ease .25s, transform .25s ease
+            &:nth-child(1)
+                margin-top: -8px
+            &:nth-child(3)
+                margin-top: 6px
+
+        .is-mobilenav-open &
+            span
+                transition: margin .25s ease, transform .25s ease .25s
+                &:nth-child(1)
+                    margin-top: -1px
+                    transform: rotate(45deg)
+                &:nth-child(2)
+                    opacity: 0
+                    transition-delay: .25s
+                &:nth-child(3)
+                    margin-top: -1px
+                    transform: rotate(-45deg)
+
+
+
+// ==================================================
+// > OPEN STATE : BODY
+// ==================================================
+.is-mobilenav-open
+    +screen(sm)
+        overflow: hidden
+        .site
+            opacity: .2
+            transform: translateX(-60px)

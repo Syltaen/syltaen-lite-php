@@ -1,38 +1,35 @@
 <?php
-/**
- *
- * Controller for the application
- *
- * @package Syltaen
- *
- */
 
-error_reporting(E_ALL);
-ini_set("display_errors", 1);
+include __DIR__ . "/app/functions.php";
+
+use Pecee\SimpleRouter\SimpleRouter as Router;
+use Pecee\Http\Request;
+
+Router::setDefaultNamespace("\Syltaen");
 
 // ==================================================
-// > DEPENDENCIES
+// > ROUTES
 // ==================================================
-require_once('functions.php');
+Router::partialGroup(BASE_URI, function () {
 
+    // API
+    Router::get("api/{method}", "ApiController");
 
-// ==================================================
-// > INIT
-// ==================================================
-$data = array();
-$views = array( 'home' );
-$models = array( 'home' );
+    // Homepage
+    Router::get("/", "PageController@home");
 
-// ==================================================
-// > TEMPLATES
-// ==================================================
-
-
+});
 
 
 // ==================================================
-// > RENDERING
+// > 404
 // ==================================================
-model($models);
-render($views, $data);
+Router::error(function(Request $request, \Exception $exception) {
 
+    if ($exception->getCode() == 404) {
+        return (new Syltaen\PageController)->error404();
+    }
+
+});
+
+Router::start();

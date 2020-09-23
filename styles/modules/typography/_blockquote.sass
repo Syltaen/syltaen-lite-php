@@ -1,0 +1,25 @@
+// =============================================================================
+// > MODULES: TXT - QUOTES
+// =============================================================================
+
+blockquote:not([class]),
+.blockquote
+    padding: 3px 1em
+    margin: 2em 0
+    border-left: 5px solid color(light-grey)
+    font-style: italic
+    position: relative
+
+    *
+        position: relative
+
+    &::before
+        +fa(quote-right)
+        +absolute(top 0 right 0)
+        +font(2 light-grey)
+
+    cite,
+    .blockquote__author
+        display: block
+        +font(bold primary right)
+        font-style: normal

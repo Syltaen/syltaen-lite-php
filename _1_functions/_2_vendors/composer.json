@@ -1,6 +1,0 @@
-{
-    "require": {
-        "pug-php/pug": "^2.5",
-        "catfan/Medoo": "^1.2"
-    }
-}

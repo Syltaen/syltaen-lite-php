@@ -1,0 +1,6 @@
+.DS_Store
+
+/app/vendors/vendor
+/node_modules
+
+/app/cache/*

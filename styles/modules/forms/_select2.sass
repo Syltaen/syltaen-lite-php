@@ -1,0 +1,227 @@
+// =============================================================================
+// > COMPONENTS : SELECT2
+// =============================================================================
+
+// DROPDOWN
+$dropdown-background: color(light-grey)
+$dropdown-border: $input-border
+$results-height: 350px
+$option-padding-vertical: 5px
+$dropdown-border-radius: $input-border-radius
+$dropdown-color: $input-color
+
+// ARROW & CLEAR
+$arrow-color: $input-color
+$clear-color: $input-color
+
+// SEARCH
+$search-border: $input-border
+$search-background: $input-background
+$search-spacing: 5px
+
+// SELECTED
+$selected-background: color(primary)
+$selected-color: white
+
+// MULTIPLE - TAG
+$tag-background: $input-background
+$tag-border: 1px solid $input-background
+$tag-border-radius: 0
+$tag-remove-color: color(primary)
+$tag-remove-hover-color: color(error)
+
+
+// =============================================================================
+// > PARTS
+// =============================================================================
+.select2
+    +font($input-color)
+
+    // ==================================================
+    // > CONTAINER
+    // ==================================================
+    &-container
+        display: block
+        position: relative
+        width: 100% !important
+        &--disabled
+            opacity: .25
+
+        &--open.select2-container--below .select2-selection
+            border-bottom-left-radius: 0px !important
+            border-bottom-right-radius: 0px !important
+
+        &--open.select2-container--above .select2-selection
+            border-top-left-radius: 0px !important
+            border-top-right-radius: 0px !important
+
+
+    &-hidden-accessible
+        +absolute(left -9999em)
+        opacity: 0
+        visibility: hidden
+
+    // ==================================================
+    // > DROPDOWN
+    // ==================================================
+    &-dropdown
+        background-color: $dropdown-background
+        border: $dropdown-border
+        display: block
+        +absolute(left 9999em)
+        width: 100%
+        z-index: 1051
+        border-radius: $dropdown-border-radius
+        color: $dropdown-color
+        &--above
+            border-bottom: 0
+            border-bottom-left-radius: 0
+            border-bottom-right-radius: 0
+        &--below
+            border-top: 0
+            border-top-left-radius: 0
+            border-top-right-radius: 0
+            // box-shadow: 0 -15px 15px rgba(black, .2)
+        .select2-container--open &
+            left: 0
+
+        .admin-bar &
+            margin-top: -32px
+
+    &-results__option
+        padding: $option-padding-vertical $input-padding
+        user-select: none
+        transition: all .4s ease
+        +font(semibold)
+
+        &[aria-selected]
+            cursor: pointer
+        &[aria-selected="true"]
+            +font(bold)
+
+    &-search--dropdown
+        display: block
+        padding: $search-spacing
+        .select2-search__field
+            padding: 4px $input-padding
+            width: 100%
+            background: $search-background
+        &.select2-search--hide
+            display: none
+
+
+    // ==================================================
+    // > RESULTS
+    // ==================================================
+    &-results
+        &__options
+            max-height: $results-height
+            overflow-y: auto
+            &--nested
+                max-height: none
+                margin-left: $input-padding * -1
+                margin-right: $input-padding * -1
+                +font(14px)
+                text-indent: 10px
+
+        &__option
+            &--highlighted[aria-selected]
+                color: $selected-color
+                background: $selected-background
+
+
+    // ==================================================
+    // > SELECTION
+    // ==================================================
+    &-selection
+        position: relative
+        display: block
+        height: $input-height
+        user-select: none
+        border: $input-border
+        border-radius: $input-border-radius
+        background: $input-background
+        color: $input-color
+        &--single
+            cursor: pointer
+
+        &--multiple
+            cursor: text
+            height: auto
+
+        &__rendered
+            display: block
+            padding: 0 $input-padding
+            overflow: hidden
+            text-overflow: ellipsis
+            white-space: nowrap
+            line-height: $input-height
+
+        &--multiple &__rendered
+            line-height: $input-height - 4px
+            min-height: $input-height - 2px
+
+        &--multiple &__choice
+            background-color: $tag-background
+            border: $tag-border
+            border-radius: $tag-border-radius
+            cursor: default
+            float: left
+            padding: 0 5px
+
+            &__remove
+                color: $tag-remove-color
+                cursor: pointer
+                display: inline-block
+                margin-right: 2px
+                &:hover
+                    color: $tag-remove-hover-color
+
+        &__placeholder
+            +font(medium-grey regular)
+
+    // ==================================================
+    // > SEARCH
+    // ==================================================
+    &-search
+
+        // DROPDOWN
+        &--dropdown &
+            &__field
+                border: $search-border
+
+
+        // INLINE
+        &--inline
+            float: left
+        &--inline &
+            &__field
+                height: $input-height - 3px
+                border: none
+                padding: 0
+                background: $input-background
+
+
+    // ==================================================
+    // > ARROW
+    // ==================================================
+    &-selection__arrow
+        height: $input-height
+        +absolute(top 0 right 0)
+        width: 40px
+        +font(16px $input-height center $arrow-color)
+        &::before
+            +fa(caret-down)
+            .select2-container--open &
+                +fa(caret-up)
+
+
+    // ==================================================
+    // > CLEAR
+    // ==================================================
+    &-selection__clear
+        cursor: pointer
+        float: right
+        font-weight: bold
+        margin-right: 20px
+        position: relative
