@@ -1,32 +1,91 @@
 <?php
 
-// ==================================================
-// > COMMON CONFIG
-// ==================================================
+return array_merge([
 
-/**
- * Site name
- */
-define("SITE_NAME", "Website name");
+    // =============================================================================
+    // > COMMON
+    // =============================================================================
+
+    /**
+     * Site name
+     */
+    "site_name" => "Website name",
+
+    /**
+     * Base DIR
+     */
+    "base_dir" => __DIR__ . "/../..",
+
+    /**
+     * Base URI
+     */
+    "base_uri" => $_SERVER["BASE_PATH"],
+
+    /**
+     * Debug log
+     */
+    "log"    => [
+
+        // Number of backtrace calls to include in debugs
+        "backtrace_level" => 1,
+
+        // Wether to fetch all fields of model logged or not.
+        // Can cause infinite loop in some cases.
+        "fetch_fields"    => true,
+
+        // Number of lines to keep in each logfile
+        "log_history"     => 50000,
+    ],
+], [
 
 
-/**
- * Base DIR
- */
-define("BASE_DIR", __DIR__ . "/../..");
+    // =============================================================================
+    // > DEVELOPPMENT
+    // =============================================================================
+    "dev" => [
+        /**
+         * Activate the display of errors
+         */
+        "debug" => true,
 
+        /**
+         * HTTP CACHE
+         */
+        "http_cache" => false,
 
-/**
- * Base URI
- */
-define("BASE_URI", $_SERVER["BASE_PATH"]);
+        /**
+         * Database
+         */
+        "db" => [
+            "name" => "syltaen-php",
+            "host" => "localhost",
+            "user" => "root",
+            "pass" => "root"
+        ]
+    ],
 
+    // =============================================================================
+    // > PRODUCTION
+    // =============================================================================
+    "prod" => [
+        /**
+         * Activate the display of errors
+         */
+        "debug" => isset($_GET["debug"]),
 
-// ==================================================
-// > CONFIG LOADING
-// ==================================================
-if (!empty($_SERVER["HTTP_HOST"]) && $_SERVER["HTTP_HOST"] == "localhost") {
-    include __DIR__ . "/config-local.php";
-} else {
-    include __DIR__ . "/config-prod.php";
-}
+        /**
+         * HTTP CACHE
+         */
+        "http_cache" => true,
+
+        /**
+         * Database
+         */
+        "db" => [
+            "name" => "",
+            "host" => "",
+            "user" => "",
+            "pass" => ""
+        ]
+    ]
+][!empty($_SERVER["HTTP_HOST"]) && $_SERVER["HTTP_HOST"] == "localhost" ? "dev" : "prod"]);

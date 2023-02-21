@@ -67,7 +67,7 @@ class Controller
 
 
         // Cache render for repeat use
-        if (HTTP_CACHE) {
+        if (config("http_cache")) {
             Cache::saveHttpdoc($_SERVER["REQUEST_URI"], $view);
         }
 

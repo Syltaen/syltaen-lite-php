@@ -6,7 +6,7 @@
 SetEnvIf HOST "^.*" BASE_PATH=/
 
 # LOCAL PATH
-SetEnvIf HOST "^localhost$" BASE_PATH=/_/syltaen/syltaen-lite-php
+SetEnvIf HOST "^localhost$" BASE_PATH=/_/syltaen/syltaen-lite-php/
 
 
 ##################################

@@ -4,7 +4,6 @@ namespace Syltaen;
 
 class View
 {
-
     const CACHE = true;
 
     // ==================================================
@@ -67,7 +66,7 @@ class View
 
                 // Caching
                 "cache"         => static::CACHE ? Files::path("app/cache/pug-php/") : false,
-                "upToDateCheck" => DEBUG, // Alaws serve cached versions in production
+                "upToDateCheck" => config("debug"), // Alaws serve cached versions in production
 
                 // Options
                 "strict" => true,
@@ -140,7 +139,7 @@ class View
 
             // Return local url
             "_url" => function ($path) {
-                return BASE_URI . $path;
+                return config("base_uri") . $path;
             },
 
             // Return an image url

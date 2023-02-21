@@ -1,7 +1,8 @@
 import $ from "jquery"
+import "slick-carousel"
 
 import parallax from "./../tools/parallax.coffee"
-import UploadField from "./../tools/UploadField.coffee"
+import { UploadField, AutoUploadField } from "./../tools/UploadField.coffee"
 import SelectField from "./../tools/SelectField.coffee"
 import PasswordBox from "./../tools/PasswordBox.coffee"
 import ConfirmationModal from "./../tools/ConfirmationModal.coffee"
@@ -13,12 +14,11 @@ import "./../tools/jquery.scrollnav.coffee"
 import "./../tools/jquery.incrementor.coffee"
 import "./../tools/jquery.siteMessage.coffee"
 
-export default in: ->
+$ ->
 
     # =============================================================================
     # > ANIMATIONS
     # =============================================================================
-
     # INCREMENTOR
     $(".incrementor").each (i, el) -> $(el).incrementor()
 
@@ -29,9 +29,6 @@ export default in: ->
 
     # CONTAINERS DELAY
     $(".site-main .container").each (i, el) -> if i then $(el).addClass "delay-" + i
-
-    # ANIMATION CLASSES
-    $("p > img, .wp-caption > p").parent("p, .wp-caption").addClass("animation-image image-wrapper")
 
 
     # =============================================================================
@@ -73,9 +70,10 @@ export default in: ->
     $("input[type='password']").not(".ninja-forms-field, .passwordbox__field").each -> new PasswordBox $(@)
 
     # DOUBLE-SUBMIT PREVENTION
-    $("form").submit (e) ->
+    $(".site-main form").submit (e) ->
         if ($(@).hasClass("is-sending")) then e.preventDefault()
         $(@).addClass "is-sending"
+
     $("form").change ->
         $(@).removeClass "is-sending"
 

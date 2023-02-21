@@ -28,6 +28,7 @@ class ApiController extends Controller
     private function lab($target = false)
     {
 
+
     }
 
 

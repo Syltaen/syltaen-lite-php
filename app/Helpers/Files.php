@@ -52,7 +52,7 @@ abstract class Files
      */
     public static function path($path_from_root = "")
     {
-        return str_replace("\\", "/", BASE_DIR . "/" . $path_from_root);
+        return str_replace("\\", "/", config("base_dir") . "/" . $path_from_root);
     }
 
 
@@ -99,7 +99,7 @@ abstract class Files
      */
     public static function url($path_from_root = "")
     {
-        return BASE_URI . "/" . $path_from_root;
+        return config("base_uri") . "/" . $path_from_root;
     }
 
     /**

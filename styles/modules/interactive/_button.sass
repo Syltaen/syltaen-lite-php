@@ -12,7 +12,7 @@ $button_base_color: color(primary)
     z-index: 5
     border: 2px solid $button_base_color
     cursor: pointer
-    padding: .5em 1em
+    padding: .5em 1.5em
     transition: all .35s ease
 
     &::before
@@ -65,13 +65,13 @@ $button_base_color: color(primary)
 
     // ========== COLORS ========== //
     @each $color, $value in $colors
-        &--#{$color}
+        &---#{"" + $color}
             border-color: $value
             &::before
                 background: $value
             &:hover
                 color: $value
-        &--#{$color}.button--reversed
+        &---#{"" + $color}.button--reversed
             color: $value
             &:hover
                 color: white

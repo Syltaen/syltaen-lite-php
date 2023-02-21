@@ -4,7 +4,6 @@
 // Convenience function used to set content property
 @function fa-content($icon) {
   @return unquote("\"#{ list_get($fa-icons, $icon) }\"");
-
 }
 
 

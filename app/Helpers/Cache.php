@@ -295,6 +295,31 @@ class Cache
         }
     }
 
+    /**
+     * Cache a specific value to avoid multiple processing during a same page load
+     *
+     * @return mixed
+     */
+    public static function value($key, $value_or_callback = null)
+    {
+        $cached_values = Data::globals("cached_values") ?: set();
+
+        // Getting a value
+        if (is_null($value_or_callback)) {
+            return $cached_values[$key] ?? null;
+        }
+
+        if ($cached_values->hasKey($key)) {
+            return $cached_values[$key];
+        }
+
+        // Saving a new value
+        $cached_values[$key] = is_callable($value_or_callback) ? $value_or_callback() : $value_or_callback;
+        Data::globals(["cached_values" => $cached_values]);
+
+        return $cached_values[$key];
+    }
+
 
     // =============================================================================
     // > HTTPDOCS CACHE

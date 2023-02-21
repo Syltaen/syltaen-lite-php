@@ -1,5 +1,7 @@
 <?php
 
+namespace Syltaen;
+
 include __DIR__ . "/app/functions.php";
 
 use Pecee\SimpleRouter\SimpleRouter as Router;
@@ -10,7 +12,7 @@ Router::setDefaultNamespace("\Syltaen");
 // ==================================================
 // > ROUTES
 // ==================================================
-Router::partialGroup(BASE_URI, function () {
+Router::partialGroup(config("base_uri"), function () {
 
     // API
     Router::get("api/{method}", "ApiController");
@@ -27,7 +29,7 @@ Router::partialGroup(BASE_URI, function () {
 Router::error(function(Request $request, \Exception $exception) {
 
     if ($exception->getCode() == 404) {
-        return (new Syltaen\PageController)->error404();
+        return (new PageController)->error404();
     }
 
 });

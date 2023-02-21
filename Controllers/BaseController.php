@@ -70,10 +70,10 @@ abstract class BaseController extends Controller
                 "footer"       => $this->footer(),
                 "menus"        => $this->menus(),
 
-                "page_title"   => SITE_NAME,
+                "page_title"   => config("site_name"),
 
-                "url"          => BASE_URI,
-                "name"         => SITE_NAME,
+                "url"          => config("base_uri"),
+                "name"         => config("site_name"),
                 "language"     => "fr-FR",
                 "charset"      => "UTF-8",
                 "body_class"   => [],
@@ -89,7 +89,7 @@ abstract class BaseController extends Controller
      */
     protected function setPageTitle($title, $raw = false)
     {
-        $this->data["site"]["page_title"] = $raw ? $title : SITE_NAME . " - " . $title;
+        $this->data["site"]["page_title"] = $raw ? $title : config("site_name") . " - " . $title;
     }
 
 
