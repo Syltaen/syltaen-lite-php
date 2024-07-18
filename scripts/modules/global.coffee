@@ -8,10 +8,11 @@ import PasswordBox from "./../tools/PasswordBox.coffee"
 import ConfirmationModal from "./../tools/ConfirmationModal.coffee"
 import Shadowbox from "./../tools/Shadowbox.coffee"
 
-import "./../tools/jquery.showif.coffee"
+import "./../tools/jquery.if.coffee"
 import "./../tools/jquery.collapsable.coffee"
 import "./../tools/jquery.scrollnav.coffee"
 import "./../tools/jquery.incrementor.coffee"
+import "./../tools/jquery.map.coffee"
 import "./../tools/jquery.siteMessage.coffee"
 
 $ ->
@@ -26,9 +27,6 @@ $ ->
     setTimeout ->
         if parallax then parallax.refresh()
     , 500
-
-    # CONTAINERS DELAY
-    $(".site-main .container").each (i, el) -> if i then $(el).addClass "delay-" + i
 
 
     # =============================================================================
@@ -54,6 +52,21 @@ $ ->
     # SITE MESSAGE
     $(".site-message").siteMessage()
 
+    # IMAGE SHADOWBOX
+    $("a[href$='.jpg'], a[href$='.png'], a[href$='.gif']").click (e) ->
+        unless $(@).attr("download")
+            e.preventDefault()
+            sb = new Shadowbox().image($(@).attr("href"))
+
+    # MAP
+    $(".map__wrap").each -> $(@).addMap()
+
+    # VIDEO
+    $(".video__play").click ->
+        $(@).closest(".video").addClass("is-started")
+        .find("video").attr("controls", "controls")[0].play()
+
+
     # =============================================================================
     # > FORMS
     # =============================================================================
@@ -68,6 +81,9 @@ $ ->
 
     # PASSWORDBOX
     $("input[type='password']").not(".ninja-forms-field, .passwordbox__field").each -> new PasswordBox $(@)
+
+    # AUTO-SUBMIT
+    $("[autosubmit]").change -> $(@).closest("form").submit()
 
     # DOUBLE-SUBMIT PREVENTION
     $(".site-main form").submit (e) ->
@@ -88,4 +104,4 @@ $ ->
         $(@).val val
 
     # CONDITIONAL DISPLAY
-    $("[data-showif]").each -> $(@).showif $(@).data("showif")
+    $("[data-if]").each -> $(@).if $(@).data("if"), $(@).data("if-action")

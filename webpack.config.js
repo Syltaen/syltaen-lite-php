@@ -13,19 +13,23 @@ const LiveReloadPlugin     = require("webpack-livereload-plugin")
 const BrowserSyncPlugin    = require("browser-sync-webpack-plugin")
 const TerserPlugin         = require("terser-webpack-plugin");
 const CssMinimizerPlugin   = require("css-minimizer-webpack-plugin")
-const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
+const FriendlyErrorsWebpackPlugin = require('@soda/friendly-errors-webpack-plugin')
 
 
 module.exports = {
     cache: true,
-    stats: "errors-only",
+    stats: false,
 
     // IN
     entry: {
         "bundle": [
             "./scripts/builder.coffee",
             "./styles/builder.sass"
-        ]
+        ],
+        // "admin" : [
+        //     "./scripts/admin.coffee",
+        //     "./styles/admin.sass",
+        // ]
     },
 
     // OUT
@@ -68,10 +72,9 @@ module.exports = {
                     MiniCssExtractPlugin.loader,
                     { loader: "css-loader", options: { url: false }, },
                     { loader: "postcss-loader", options: { postcssOptions: { plugins: [require("autoprefixer")({"overrideBrowserslist": ["> 1%", "last 10 versions"]})] }}},
-                    "sass-loader"
+                    { loader: "sass-loader", options: { implementation: require("sass-embedded") }}
                 ],
             },
-
         ],
     },
 
