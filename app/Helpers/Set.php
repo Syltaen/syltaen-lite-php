@@ -26,9 +26,9 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Find an array|object item by its property.
      * Find the first match's key.
-     * @param  [type] $key
-     * @param  [type] $value
-     * @return void
+     * @param  string $key
+     * @param  mixed $value
+     * @return mixed Key
      */
     public function searchBy($key, $value)
     {
@@ -72,13 +72,53 @@ class Set extends \ArrayObject implements \JsonSerializable
 
     /**
      * Return the last item in the set
+     * or the nth item from the end
+     *
+     * @param int|false $nth_from_end
+     * @return mixed
+     */
+    public function last($nth_from_end = false)
+    {
+        if ($nth_from_end) {
+            return $this[$this->count() - $nth_from_end];
+        }
+
+        $array = $this->getArrayCopy();
+        return end($array);
+    }
+
+
+    /**
+     * Return a random item of the set
      *
      * @return mixed
      */
-    public function last()
+    public function getRandom()
     {
         $array = $this->getArrayCopy();
-        return end($array);
+        return $array[array_rand($array)];
+    }
+
+    /**
+     * Find the item that has the most occurrences
+     *
+     * @return mixed
+     */
+    public function mostCommon()
+    {
+        $occurrences = $this->occurrences();
+        return $occurrences->flip()[$occurrences->max()];
+    }
+
+    /**
+     * Find the item that has the most occurrences
+     *
+     * @return mixed
+     */
+    public function leastCommon()
+    {
+        $occurrences = $this->occurrences();
+        return $occurrences->flip()[$occurrences->min()];
     }
 
     // ==================================================
@@ -97,6 +137,20 @@ class Set extends \ArrayObject implements \JsonSerializable
         } else {
             $this->asort();
         }
+        return $this;
+    }
+
+    /**
+     * Sort the elements of the set by a given property
+     *
+     * @param  string $key The key to sort by
+     * @return self
+     */
+    public function sortBy($key)
+    {
+        $this->uasort(function ($a, $b) use ($key) {
+            return ((array) $a)[$key] > ((array) $b)[$key] ? 1 : -1;
+        });
         return $this;
     }
 
@@ -127,17 +181,22 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Insert new elements in the list at a specific position
      *
+     * @param  array|Set $array The elements to insert
+     * @param  int|string|null $position The position where to insert the new elements.
+     * @param int $offset If the position is a string/key, the offset to apply to the key's position (default to 1, meaning that the new elements will be inserted after the key)
      * @return self
      */
-    public function insert($array, $position = null)
+    public function insert($array, $position = null, $offset = 1)
     {
         // Get the numerical index where the set should be split
         $index = is_null($position) ? $this->count() : (
-            is_int($position) ? $position
-            // If a string/key is given : try to get its position
-                : (($index = $this->keys()->search($position)) !== false ? $index + 1
-                // Default to the end of the set
-                    : $this->count())
+            is_int($position) ? $position : (
+                // If a string/key is given : try to get its position
+                ($index = $this->keys()->search($position)) !== false ? $index + $offset : (
+                    // Default to the end of the set
+                    $this->count()
+                )
+            )
         );
 
         $this->exchangeArray(array_merge(
@@ -147,6 +206,61 @@ class Set extends \ArrayObject implements \JsonSerializable
         ));
 
         return $this;
+    }
+
+
+    /**
+     * Implement the "array_splice" function
+     *
+     * @param int $offset
+     * @param int $length
+     * @param array|Set $replacement
+     * @return Set
+     */
+    public function splice($offset, $length = null, $replacement = [])
+    {
+        $array = (array) $this;
+        $return = array_splice($array, $offset, $length, (array) $replacement);
+        $this->exchangeArray($array);
+        return new static($return);
+    }
+
+    /**
+     * Remove and return the first item of the set
+     *
+     * @return mixed
+     */
+    public function shift()
+    {
+        $array = (array) $this;
+        $item = array_shift($array);
+        $this->exchangeArray($array);
+        return $item;
+    }
+
+    /**
+     * Insert a new item at the beginning of the array
+     *
+     * @param  mixed  $item
+     * @return self
+     */
+    public function unshift($item)
+    {
+        $this->insert([$item], 0);
+        return $this;
+    }
+
+    /**
+     * Remove and return the last item of the set
+     *
+     * @return mixed
+     */
+    public function pop()
+    {
+        $array = (array) $this;
+        $item = array_pop($array);
+        $this->exchangeArray($array);
+        return $item;
     }
 
     /**
@@ -162,14 +276,14 @@ class Set extends \ArrayObject implements \JsonSerializable
     }
 
     /**
-     * Add a new item at the end of the array
+     * Merge the set with another or with itself
      *
-     * @param  mixed  $item
+     * @param  mixed  $items
      * @return self
      */
-    public function merge($items = false)
+    public function merge($items = null)
     {
-        if ($items) {
+        if ($items !== null) {
             return new static(array_merge(
                 (array) $this,
                 (array) $items
@@ -182,7 +296,54 @@ class Set extends \ArrayObject implements \JsonSerializable
         }, new static );
     }
 
+    /**
+     * Fill the array with a value
+     * Implementation of array_fill
+     *
+     * @param  int $start_index
+     * @param  int $count
+     * @param  mixed $value
+     * @return Set
+     */
+    public function fill($start_index, $count, $value)
+    {
+        // Classic implementation : fill with the same value
+        if (!is_callable($value)) {
+            return new static(array_fill($start_index, $count, $value));
+        }
 
+        // Callable : allow to fill with a callback function that is called for each item
+        $array = [];
+        for ($i = $start_index; $i < $start_index + $count; $i++) {
+            $array[$i] = $value($i);
+        }
+
+        return $this->insert($array, $start_index);
+    }
+
+    /**
+     * Store one or several fields values
+     *
+     * @param  array $fields
+     * @param  string|int $data_source The object ID or option page
+     * @return void
+     */
+    public function store($fields, $data_source = null)
+    {
+        if (empty($fields)) {
+            return false;
+        }
+
+        // Normalize keys that don't have a default value
+        $fields = Data::normalizeFieldsKeys($fields);
+
+        foreach ($fields as $key => $value) {
+            $data               = Data::getAdvanced($key, $value, $data_source, $this);
+            $this[$data["key"]] = $data["value"];
+        }
+
+        return $this;
+    }
 
     // ==================================================
     // > REMOVING/FILTERING ITEMS
@@ -249,7 +410,8 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Implementation of the "array_unique" function
      *
-     * @param  callable $callback
+     * @param  bool $preserve_keys Whether to preserve keys or not
+     * @param  int $flags The sorting type flag
      * @return Set
      */
     public function unique($preserve_keys = false, $flags = SORT_STRING)
@@ -264,7 +426,7 @@ class Set extends \ArrayObject implements \JsonSerializable
 
     /**
      * Get all items that apear more than once
-     * @param  int   $limit Minimum number of occurance
+     * @param  int   $limit Minimum number of occurrences
      * @return Set
      */
     public function duplicates($limit = 2)
@@ -276,10 +438,26 @@ class Set extends \ArrayObject implements \JsonSerializable
         })->keys();
     }
 
+
+    /**
+     * Get the number of occurrences of each unique item
+     *
+     * @return Set
+     */
+    public function occurrences()
+    {
+        return $this->groupBy(function ($item) {
+            return $item->value ?? $item;
+        })->mapAssoc(function ($item, $group) {
+            return [$item => count($group)];
+        });
+    }
+
     /**
      * Implementation of the "array_diff" function
      *
      * @param  array $array
+     * @param  bool $preserve_keys Whether to preserve keys or not
      * @return Set
      */
     public function remove($array, $preserve_keys = false)
@@ -293,7 +471,7 @@ class Set extends \ArrayObject implements \JsonSerializable
     }
 
     /**
-     * Implementation of the "array_diff" function
+     * Implementation of the "array_intersect" function
      *
      * @param  array $array
      * @return Set
@@ -307,6 +485,7 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Campare both keys and value and return the difference
      *
+     * @param  array $array
      * @return Set
      */
     public function fullDiff($array)
@@ -322,6 +501,9 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Implementation of the "array_slice" function
      *
+     * @param  int $offset
+     * @param  int|null $length
+     * @param  bool $preserve_keys Whether to preserve keys or not
      * @return Set
      */
     public function slice($offset, $length = null, $preserve_keys = false)
@@ -332,6 +514,7 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Retrieve a list of items based on a callback
      *
+     * @param  array $keys_to_keep The keys to keep in the set
      * @return Set The filtered results
      */
     public function keepKeys($keys_to_keep)
@@ -345,6 +528,7 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Retrieve a list of items based on a callback
      *
+     * @param  array $keys_to_remove The keys to remove from the set
      * @return Set The filtered results
      */
     public function removeKeys($keys_to_remove)
@@ -380,11 +564,46 @@ class Set extends \ArrayObject implements \JsonSerializable
         return new static(array_map($callback, (array) $this->values(), (array) $this->keys()));
     }
 
+        /**
+     * Shortcut to update only the keys by maping them
+     *
+     * @param callable $callback
+     * @return Set
+     */
+    public function mapKeys($callback)
+    {
+        return $this->mapAssoc(fn ($k, $v) => [$callback($k, $v) => $v]);
+    }
+
+    /**
+     * Map keys recursively
+     *
+     * @param callable $callback
+     * @return Set
+     */
+    public function mapKeysRecursive($callback)
+    {
+        return $this->mapAssoc(fn ($k, $v) => [$callback($k, $v) => $v instanceof Set ? $v->mapKeysRecursive($callback) : $v]);
+    }
+
+    /**
+     * Apply a callback to each item without changing the array
+     *
+     * @param callable $callback
+     * @return self
+     */
+    public function each($callback)
+    {
+        foreach ($this as $key => $value) {
+            $callback($value, $key);
+        }
+        return $this;
+    }
+
     /**
      * Map an associative array, allow to change its key and value
      *
      * @param  callable $callback Should return [$key, $value] array
-     * @param  array    $assoc    The array to process
      * @return Set
      */
     public function mapAssoc($callback)
@@ -415,18 +634,6 @@ class Set extends \ArrayObject implements \JsonSerializable
     }
 
     /**
-     * Use the values as keys
-     *
-     * @return Set
-     */
-    public function valuesAsOptions()
-    {
-        return $this->mapAssoc(function ($i, $value) {
-            return [$value => $value];
-        });
-    }
-
-    /**
      * Implementation of the "array_flip" function
      *
      * @return Set
@@ -445,9 +652,18 @@ class Set extends \ArrayObject implements \JsonSerializable
     {
         $return = [];
         $array  = (array) $this->getArrayCopy();
-        array_walk_recursive($array, function ($a, $k) use (&$return) {
-            $return[] = $k;
-        });
+
+        foreach ($array as $key => $value) {
+            if (!is_array($value)) {
+                $return[$key] = $value;
+                continue;
+            }
+
+            foreach ((new static($value))->flatten() as $subkey => $subvalue) {
+                $return[$key . "." . $subkey] = $subvalue;
+            }
+        }
+
         return new static($return);
     }
 
@@ -471,9 +687,9 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Reindex an set using a specific column of each each item, or a callback
      *
-     * @param  string|callback      $key
-     * @param  bool|string|callback $value_key The key to keep for each value
-     * @return Sed
+     * @param  string|callable      $key
+     * @param  bool|string|callable $value_key The key to keep for each value
+     * @return Set
      */
     public function index($key, $value_key = false)
     {
@@ -494,7 +710,7 @@ class Set extends \ArrayObject implements \JsonSerializable
      * Group all children by a common value
      *
      * @param  string               $key       Key of the value to group by
-     * @param  bool|string|callback $value_key The key to keep for each value
+     * @param  bool|string|callable $value_key The key to keep for each value
      * @return Set
      */
     public function groupBy($key, $value_key = false)
@@ -505,7 +721,7 @@ class Set extends \ArrayObject implements \JsonSerializable
                 $key = $key($item);
             } else {
                 $item = (array) $item;
-                $key  = ((array) $item)[$key];
+                $key  = ((array) $item)[$key] ?? null;
             }
 
             // Get value
@@ -520,6 +736,17 @@ class Set extends \ArrayObject implements \JsonSerializable
             $groups[$key][] = $value;
             return $groups;
         });
+    }
+
+    /**
+     * Create sub-arrays of size $size
+     *
+     * @param int $size
+     * @return Set
+     */
+    public function chunk($size)
+    {
+        return (new static(array_chunk((array) $this, $size)))->map(fn ($chunk) => new static($chunk));
     }
 
     // ==================================================
@@ -560,6 +787,7 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Return a CallableSet that allows to use a specific method on each element of this set.
      *
+     * @param int $deepness The level of deepness to apply the CallableCollection on.
      * @return CallableCollection
      */
     public function callEach($deepness = 1)
@@ -585,15 +813,16 @@ class Set extends \ArrayObject implements \JsonSerializable
      */
     public function reduce($callback, $initial = null)
     {
-        return array_reduce((array) $this, $callback, is_null($initial) ? new static  : $initial);
+        return array_reduce((array) $this, $callback, is_null($initial) ? new static : $initial);
     }
 
     /**
      * Implode all items with a join
      *
+     * @param  string $join
      * @return string
      */
-    public function join($join)
+    public function join($join = "")
     {
         return implode($join, (array) $this->values());
     }
@@ -615,7 +844,7 @@ class Set extends \ArrayObject implements \JsonSerializable
      */
     public function max()
     {
-        return max((array) $this);
+        return $this->empty() ? null : max((array) $this);
     }
 
     /**
@@ -648,6 +877,8 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Check if a value is present in the set
      *
+     * @param  mixed     $value
+     * @param  boolean   $recursive Whether to search recursively in child sets or not
      * @return boolean
      */
     public function hasValue($value, $recursive = false)
@@ -675,6 +906,8 @@ class Set extends \ArrayObject implements \JsonSerializable
     /**
      * Check if a key is defined in the set
      *
+     * @param  mixed     $key
+     * @param  boolean   $recursive Whether to search recursively in child sets or not
      * @return boolean
      */
     public function hasKey($key, $recursive = false)
@@ -704,7 +937,8 @@ class Set extends \ArrayObject implements \JsonSerializable
      *
      * @return bool
      */
-    function empty() {
+    public function empty()
+    {
         return !$this->count();
     }
 
@@ -715,6 +949,7 @@ class Set extends \ArrayObject implements \JsonSerializable
      * Return the items as an html list
      *
      * @param  string   $tag
+     * @param  string|bool $class
      * @return string
      */
     public function htmlList($tag = "ul", $class = false)
@@ -724,10 +959,23 @@ class Set extends \ArrayObject implements \JsonSerializable
         }, "") . "</$tag>";
     }
 
+    /**
+     * Get the items as html attributes
+     *
+     * @return string
+     */
+    public function htmlAttrs()
+    {
+        return $this->mapWithKey(function ($value, $key) {
+            return $value
+                ? "{$key}='{$value}'"
+                : false;
+        })->filter()->join(" ");
+    }
+
     // ==================================================
     // > STATIC TOOLS
     // ==================================================
-
     /**
      * Check that a set item match a key/value pair
      *
@@ -788,7 +1036,7 @@ class Set extends \ArrayObject implements \JsonSerializable
      * Set a key in the array using object notation
      *
      * @param string $key
-     * @param mixed  $val
+     * @param self  $val
      */
     public function set($key, $val)
     {
@@ -797,12 +1045,19 @@ class Set extends \ArrayObject implements \JsonSerializable
         $pos   = &$array;
 
         foreach ($parts as $part) {
-            $pos[$part] = $pos[$part] ?? [];
-            $pos        = &$pos[$part];
+            if (is_array($pos)) {
+                $pos[$part] = $pos[$part] ?? [];
+                $pos = &$pos[$part];
+            } else {
+                $pos->$part = ((array) $pos)[$part] ?? [];
+                $pos = &$pos->$part;
+            }
         }
 
         $pos = $val;
         $this->exchangeArray($array);
+
+        return $this;
     }
 
     /**
@@ -817,7 +1072,7 @@ class Set extends \ArrayObject implements \JsonSerializable
         $value = $this->getArrayCopy();
 
         foreach ($parts as $part) {
-            $value = $value[$part] ?? null;
+            $value = ((array) $value)[$part] ?? null;
             if (is_null($value)) {return $value;}
         }
 
@@ -837,6 +1092,18 @@ class Set extends \ArrayObject implements \JsonSerializable
         return explode(".", $key);
     }
 
+    /**
+     * Get the last key part of a complexe key
+     *
+     * @param string $key
+     * @return string
+     */
+    public static function lastKeyPart($key)
+    {
+        $parts = static::getKeyParts($key);
+        return end($parts);
+    }
+
     // ==================================================
     // > DEBUG / JsonSerializable Interface
     // ==================================================
@@ -845,7 +1112,7 @@ class Set extends \ArrayObject implements \JsonSerializable
      *
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return (array) $this;
     }

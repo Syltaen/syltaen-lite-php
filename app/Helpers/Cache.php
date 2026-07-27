@@ -9,21 +9,21 @@ class Cache
      *
      * @var string
      */
-    private $key = "";
+    public $key = "";
 
     /**
      * The directory in which to store all cache files
      *
      * @var string
      */
-    private $directory = "";
+    public $directory = "";
 
     /**
      * List of files found in the directory
      *
      * @var array
      */
-    private $files     = [];
+    public $files = [];
 
     /**
      * Format to use for each cache file.
@@ -31,15 +31,23 @@ class Cache
      *
      * @var string
      */
-    private $format    = "json";
+    public $format = "serialized";
+
+    /**
+     * Compress/Decompress the stored data
+     *
+     * @var boolean
+     */
+    public $compressed = false;
 
     /**
      * Time To Live in minutes.
      * Define how much time a file can be used before it is expired.
+     * A negative number means the cache never expires.
      *
      * @var integer
      */
-    private $ttl       = 60;
+    public $ttl = 60;
 
     /**
      * Number of cache file to keep in the folder.
@@ -47,7 +55,7 @@ class Cache
      *
      * @var integer
      */
-    private $keep      = 10;
+    public $history = 10;
 
     /**
      * Timestamp when the instance was created.
@@ -55,7 +63,7 @@ class Cache
      *
      * @var integer
      */
-    private $now       = 0;
+    public $now = 0;
 
     // ==================================================
     // > PUBLIC
@@ -64,67 +72,52 @@ class Cache
     /**
      * Create a cache instance
      *
-     * @param string $key Folder in with the cache files are stored
+     * @param string $key    Folder in with the cache files are stored
+     * @param integer $ttl   Time To Live in minutes
+     * @param integer $history Number of cache file to keep in the folder
      * @param string $format File format to use
      */
-    public function __construct($key = "logs", $ttl = 60, $format = "json", $keep = 10)
+    public function __construct($key, $ttl = 60, $history = 10, $format = "serialized")
     {
         $this->key       = $key;
         $this->ttl       = round($ttl * 60);
-        $this->format    = $key == "logs" ? "log" : $format;
-        $this->keep      = $keep;
-
-        $this->now       = time();
+        $this->format    = $format;
+        $this->history   = $history;
+        $this->now       = Time::current();
         $this->directory = static::getDirectory($this->key);
         $this->files     = static::getAllFiles($this->directory, $this->format);
     }
 
+    /**
+     * Set the data as compressed
+     * Use gzencode and gzdecode to compress and decompress the data.
+     * @param boolean $value
+     * @return self
+     */
+    public function setCompressed($value = true)
+    {
+        $this->compressed = $value;
+        return $this;
+    }
 
-
+    // =============================================================================
+    // > RETRIEVING DATA
+    // =============================================================================
     /**
      * Get data from the last cache file, or create a new one if its expired
      *
-     * @param callable $resultCallback Function to execute to get the result
-     * @param int $ttl Expiration time of the cache, in minutes
-     * @param int $keep Number of cache elements to keep
-     * @return void
+     * @param  callable $resultCallback Function to execute to get the result
+     * @return mixed
      */
     public function get($resultCallback = false)
     {
         $last = $this->getDataFrom(0);
 
         if ($resultCallback && $this->isExpired()) {
-            return static::storeNew($resultCallback($last));
+            return $this->store($resultCallback($last));
         } else {
             return $last;
         }
-    }
-
-    /**
-     * Log a new line into a log text file
-     *
-     * @param string $newLine The line to add
-     * @param string $filename The logfile name
-     * @param int $linesToKeep Limit of lines to keep in the file
-     * @return void
-     */
-    public function log($newLine, $filename = "logs", $linesToKeep = 500)
-    {
-        $last = $this->getDataFrom($filename);
-
-        // Get the files
-        $filename = $this->directory . "/" . $filename . ".log";
-        $file     = fopen($filename, "w");
-
-        // The new content
-        $content = $last ? $last . "\n" : "";
-        $content .= "[". date("d/m/Y H:i:s", $this->now) . "] ". $newLine;
-        $content = implode("\n", array_slice(explode("\n", $content), -$linesToKeep, $linesToKeep));
-
-        // Rewrite the file
-        fwrite($file, $content);
-        chmod($filename, 0777);
-        fclose($file);
     }
 
     /**
@@ -134,6 +127,11 @@ class Cache
      */
     public function isExpired()
     {
+        // Negative TTL means never expires
+        if ($this->ttl < 0 && !empty($this->files)) {
+            return false;
+        }
+
         $lastTime = empty($this->files) ? 0 : intval($this->files[0]);
         return $this->now - $this->ttl > $lastTime;
     }
@@ -141,13 +139,17 @@ class Cache
     /**
      * Clear all files found in the cache folder
      *
+     * @param  bool   $hard Remove everything that is in the directory.
      * @return void
      */
-    public function clear()
+    public function clear($hard = false)
     {
+        if ($hard) {
+            Files::delete($this->directory);
+        }
+
         $this->checkGarbage(0);
     }
-
 
     // ==================================================
     // > STATIC TOOLS
@@ -155,7 +157,7 @@ class Cache
     /**
      * Get the timestamp of the last cached file
      *
-     * @param string $key
+     * @param  string $key
      * @return void
      */
     public static function getTime($key)
@@ -167,137 +169,19 @@ class Cache
     /**
      * Get the timestamp of the last cached file
      *
-     * @param string $key
-     * @return void
+     * @param  string $key
+     * @return string
      */
     public static function getDirectory($key)
     {
         return Files::path("app/cache/{$key}");
     }
 
-
-    // ==================================================
-    // > PRIVATE
-    // ==================================================
-    /**
-     * Get a list of all cached files
-     *
-     * @return void
-     */
-    private static function getAllFiles($directory, $format = "json")
-    {
-        $files = [];
-        if (is_dir($directory)) {
-            foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
-                if (strpos($file, ".".$format)) {
-                    $files[] = $file;
-                }
-            }
-
-        // Or create the cache directory if there is none
-        } else {
-            mkdir($directory);
-        }
-
-        return $files;
-    }
-
-    /**
-     * Create a new cache file
-     *
-     * @param [type] $content
-     * @param integer $keep
-     * @return void
-     */
-    private function storeNew($content)
-    {
-        // Get the file to write in
-        $filename = $this->now . "." . $this->format;
-        $filepath = $this->directory . "/" . $filename;
-        $file     = fopen($filepath, "w");
-
-        // Encode the content
-        switch ($this->format) {
-            case "json":
-            case "json:array":
-                $txt = json_encode($content);
-                break;
-            case "txt":
-            default:
-                $txt = $content;
-            break;
-        }
-
-        // Store the content in the file
-        fwrite($file, $txt);
-        chmod($filepath, 0777);
-        fclose($file);
-
-        // Add file to the list and delete files that are too old
-        array_unshift($this->files, $filename);
-        $this->checkGarbage($this->keep);
-
-        return $content;
-    }
-
-    /**
-     * Remove files that are too old.
-     * Only keep $this->keep number of files
-     *
-     * @return void
-     */
-    private function checkGarbage($keep)
-    {
-        while (count($this->files) > $keep) {
-            $filename = array_pop($this->files);
-            unlink($this->directory . "/" . $filename);
-        }
-    }
-
-
-    /**
-     * Get the data from a file by its index
-     *
-     * @param mixed $fileSearch Name or index of the file
-     * @return mix
-     */
-    private function getDataFrom($fileSearch = 0)
-    {
-        if (empty($this->files)) return false;
-
-        // Get the correct file
-        $file = false;
-
-        if (is_int($fileSearch)) { // by id
-            $file = $this->directory . "/" . $this->files[$fileSearch];
-
-        } elseif (is_string($fileSearch)) { // by name
-            foreach ($this->files as $fileIndex=>$fileName) {
-                if ($fileName == $fileSearch . "." . $this->format) {
-                    $file = $this->directory . "/" . $this->files[$fileIndex];
-                    break;
-                }
-            }
-        }
-
-        if (!file_exists($file)) return false;
-
-        $content = file_get_contents($file);
-
-        switch ($this->format) {
-            case "json":
-                return json_decode($content);
-            case "json:array":
-                return json_decode($content, true);
-            case "txt":
-            default:
-                return $content;
-        }
-    }
-
     /**
      * Cache a specific value to avoid multiple processing during a same page load
      *
+     * @param  string $key
+     * @param  mixed $value_or_callback Value to store or callback to execute to get the value to store
      * @return mixed
      */
     public static function value($key, $value_or_callback = null)
@@ -320,39 +204,160 @@ class Cache
         return $cached_values[$key];
     }
 
-
-    // =============================================================================
-    // > HTTPDOCS CACHE
-    // =============================================================================
+    // ==================================================
+    // > ENCODE / DECODE
+    // ==================================================
     /**
-     * Save a new http response in a html document to be re-used latter for the same request
+     * Encode the content so that it can be stored in a file, , using the specified format
      *
-     * @param string $path
-     * @param string $html
-     * @return void
+     * @param  mixed    $content
+     * @return string
      */
-    public static function saveHttpdoc($path, $html)
+    public function encodeContent($content)
     {
-        $dir = Files::path("app/cache/httpdocs{$path}");
-
-        // Create directory if it does not exist
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+        switch ($this->format) {
+            case "json":
+            case "json:array":
+                $content = json_encode($content);
+                break;
+            case "txt":
+                break;
+            default:
+                return serialize($content);
         }
 
-        // Write new file
-        $file = fopen($dir . "/index.html", "w");
-        fwrite($file, $html);
-        fclose($file);
+        if ($this->compressed) {
+            $content = gzencode($content);
+        }
+
+        return $content;
     }
 
     /**
-     * Clear the httpdocs cache
+     * Decode the content from a file, using the specified format
      *
+     * @param  string  $content
+     * @return mixed
+     */
+    public function decodeContent($content)
+    {
+        if ($this->compressed) {
+            $content = gzdecode($content);
+        }
+
+        switch ($this->format) {
+            case "json":
+                return json_decode($content);
+            case "json:array":
+                return json_decode($content, true);
+            case "txt":
+                return $content;
+            default:
+                return maybe_unserialize($content);
+        }
+    }
+
+    // ==================================================
+    // > PRIVATE
+    // ==================================================
+    /**
+     * Get a list of all cached files
+     *
+     * @param  string $directory
+     * @param  string $format
+     * @return array
+     */
+    public static function getAllFiles($directory, $format = "json")
+    {
+        $files = [];
+        if (is_dir($directory)) {
+            foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
+                if (strpos($file, "." . $format)) {
+                    $files[] = $file;
+                }
+            }
+
+            // Or create the cache directory if there is none
+        } else {
+            mkdir($directory, 0777, true);
+        }
+
+        return $files;
+    }
+
+    /**
+     * Create a new cache file
+     *
+     * @param  mixed   $content
+     * @return mixed
+     */
+    public function store($content)
+    {
+        // Get the file to write in
+        $filename = $this->now . "." . $this->format;
+        $filepath = $this->directory . "/" . $filename;
+        $file     = fopen($filepath, "w");
+
+        // Store the content in the file
+        fwrite($file, $this->encodeContent($content));
+        chmod($filepath, 0777);
+        fclose($file);
+
+        // Add file to the list and delete files that are too old
+        array_unshift($this->files, $filename);
+        $this->checkGarbage($this->history);
+
+        return $content;
+    }
+
+    /**
+     * Remove files that are too old.
+     * Only keep $this->histsory number of files
+     *
+     * @param  integer $keep Number of files to keep in the directory
      * @return void
      */
-    public static function clearHttpdoc()
+    public function checkGarbage($keep)
     {
-        Files::remove("app/cache/httpdocs");
+        while (count($this->files) > $keep) {
+            $filename = array_pop($this->files);
+            if (file_exists($this->directory . "/" . $filename)) {
+                unlink($this->directory . "/" . $filename);
+            }
+        }
+    }
+
+    /**
+     * Get the data from a file by its index
+     *
+     * @param  mixed $fileSearch Name or index of the file
+     * @return mixed
+     */
+    public function getDataFrom($fileSearch = 0)
+    {
+        if (empty($this->files)) {
+            return false;
+        }
+
+        // Get the correct file
+        $file = false;
+
+        if (is_int($fileSearch)) { // by id
+            $file = $this->directory . "/" . $this->files[$fileSearch];
+
+        } elseif (is_string($fileSearch)) { // by name
+            foreach ($this->files as $fileIndex => $fileName) {
+                if ($fileName == $fileSearch . "." . $this->format) {
+                    $file = $this->directory . "/" . $this->files[$fileIndex];
+                    break;
+                }
+            }
+        }
+
+        if (!file_exists($file)) {
+            return false;
+        }
+
+        return $this->decodeContent(file_get_contents($file));
     }
 }
